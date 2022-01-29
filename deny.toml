@@ -5,18 +5,17 @@ vulnerability = "deny"
 unmaintained = "warn"
 yanked = "deny"
 notice = "warn"
-ignore = [
-    # jsonwebtoken v7 pulls in bad versions of `time`/`chrono`. Waiting on jsonwebtoken v8.
-    "RUSTSEC-2020-0071",
-    "RUSTSEC-2020-0159",
-]
+# ignore = [
+#     # jsonwebtoken v7 pulls in bad versions of `time`/`chrono`. Waiting on jsonwebtoken v8.
+#     "RUSTSEC-2020-0071",
+#     "RUSTSEC-2020-0159",
+# ]
 
 [licenses]
 unlicensed = "deny"
 allow = [
     "Apache-2.0",
     "BSD-3-Clause",
-    "ISC",
     "MIT",
 ]
 deny = []
@@ -24,9 +23,7 @@ copyleft = "deny"
 allow-osi-fsf-free = "neither"
 default = "deny"
 confidence-threshold = 0.8
-exceptions = [
-    { allow = ["ISC", "MIT", "OpenSSL"], name = "ring", version = "*" },
-]
+exceptions = []
 
 [[licenses.clarify]]
 name = "ring"
@@ -48,14 +45,10 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 highlight = "all"
-deny = [
-    { name = "rustls", wrappers = ["tokio-rustls"] },
-]
+deny = []
 skip-tree = [
     # Waiting on a release that updates itoa to v1.
     { name = "hyper" },
-    # Waiting on v8, which updates base64.
-    { name = "jsonwebtoken" },
 ]
 
 [sources]
