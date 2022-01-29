@@ -1,0 +1,10 @@
+[package]
+name = "rustsec-issues"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+hubcaps = { version = "0.6", git = "https://github.com/olix0r/hubcaps.git" }
+tokio = { version = "1", features = ["rt", "macros", "time"] }
