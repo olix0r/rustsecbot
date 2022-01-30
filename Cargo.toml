@@ -22,4 +22,4 @@ branch = "ver/feature-jwt"
 
 [dependencies.tokio]
 version = "1"
-features = ["rt", "macros", "process", "time"]
+features = ["fs", "rt", "macros", "process", "time"]
