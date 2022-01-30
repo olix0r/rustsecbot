@@ -1,0 +1,83 @@
+name: Pull Request
+
+on:
+  pull_request: {}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  check:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    container:
+      image: docker://docker.io/rust:1.58.0
+    steps:
+      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+      - run: rustup component add clippy rustfmt
+      - run: cargo clippy --all-targets
+      - run: cargo fmt -- --check
+
+  docker:
+    steps:
+      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+      - run: docker build .
+
+  audit:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    # Prevent sudden announcement of a new advisory from failing Ci.
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    steps:
+    - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+    - uses: EmbarkStudios/cargo-deny-action@f2d2f98857d524436b31aa639bac5edc10863b08
+      with:
+        command: check bans licenses sources
+
+  # test:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
+  #   container:
+  #     image: docker://docker.io/rust:1.58.0
+  #   steps:
+  #     - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+  #     - run: cargo test --no-run
+  #     - run: cargo test
+
+  rust-toolchain:
+    name: rust toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+      - run: |
+          ex=0
+
+          # Check workflows against the version in rust-toolchain.
+          for f in .github/workflows/* ; do
+            versions=$(sed -nE 's|.*docker://(.*/)?rust:([^ #]+).*|\2|p' .github/workflows/policy_controller.yml)
+            for mismatch in $(echo "$versions" | grep -vF "$(cat rust-toolchain)" || true) ; do
+              echo "::error file=\"${f}\"::Workflow uses incorrect rust version(s): $mismatch"
+              ex=$((ex + 1))
+            done
+          done
+
+          # Check the main Dockerfile against the version in rust-toolchain.
+          versions=$(sed -nE 's|ARG RUST_IMAGE=(.*/)?rust:([^ #]+).*|\2|p' Dockerfile)
+          for mismatch in $(echo "$versions" | grep -vF "$(cat rust-toolchain)" || true) ; do
+            echo "::error file=Dockerfile::$f uses incorrect rust version(s): $mismatch"
+            ex=$((ex + 1))
+          done
+
+          exit $ex

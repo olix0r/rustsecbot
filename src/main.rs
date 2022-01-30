@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use rustsec_issues::{deny, Client, GitHubRepo};
+use rustsecbot::{deny, Client, GitHubRepo};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Parser)]
