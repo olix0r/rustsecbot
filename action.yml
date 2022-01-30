@@ -1,4 +1,4 @@
-name: RUSTSEC Issue Bot
+name: RUSTSEC Bot
 description: 'Creates issues from RUSTSEC advisories'
 
 # TODO:
@@ -11,7 +11,7 @@ outputs:
 
 runs:
   using: 'docker'
-  # TODO image: 'docker://ghcr.io/olix0r/rustsec-issues:v1'
+  # TODO image: 'docker://ghcr.io/olix0r/rustsecbot:v1'
   image: 'Dockerfile'
   args:
     - --github-token="${{ secrets.GITHUB_TOKEN }}"

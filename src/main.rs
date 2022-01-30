@@ -57,10 +57,13 @@ async fn main() -> Result<()> {
 
     // Create a new issue for each advisory that hasn't previously been reported.
     let opened = github.create_issues(&github_repository, advisories).await?;
-    println!("::debug::{} new issues", opened.len());
+
+    println!("::group::{} new issues", opened.len());
     for (i, _) in &opened {
-        println!("::debug::  {}: {}", i.id, i.title);
+        println!("Opened {}: {}", i.id, i.title);
     }
+    println!("::endgroup");
+
     println!(
         "::set-output name=opened::{}",
         opened

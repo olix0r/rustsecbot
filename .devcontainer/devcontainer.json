@@ -1,5 +1,5 @@
 {
-	"name": "rustsec-issues-dev",
+	"name": "rustsecbot-dev",
 	"dockerFile": "./Dockerfile",
 	"extensions": [
 		"DavidAnson.vscode-markdownlint",

@@ -12,10 +12,10 @@ RUN mkdir /out
 COPY . .
 RUN --mount=type=cache,from=docker.io/rust:1.58.0-bullseye,source=/usr/local/cargo,target=/usr/local/cargo \
     --mount=type=cache,target=target \
-    cargo build --release && mv target/release/rustsec-issues /out
+    cargo build --release && mv target/release/rustsecbot /out
 
 FROM gcr.io/distroless/cc:nonroot
 COPY --from=cargo-deny /out/cargo-deny /
-COPY --from=build /out/rustsec-issues /
+COPY --from=build /out/rustsecbot /
 ENV CARGO_DENY_PATH=/cargo-deny
-ENTRYPOINT ["/rustsec-issues"]
+ENTRYPOINT ["/rustsecbot"]
