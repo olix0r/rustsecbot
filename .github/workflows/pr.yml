@@ -2,6 +2,9 @@ name: Pull Request
 
 on:
   pull_request: {}
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -68,7 +71,7 @@ jobs:
 
           # Check workflows against the version in rust-toolchain.
           for f in .github/workflows/* ; do
-            versions=$(sed -nE 's|.*docker://(.*/)?rust:([^ #]+).*|\2|p' .github/workflows/policy_controller.yml)
+            versions=$(sed -nE 's|.*docker://(.*/)?rust:([^ #]+).*|\2|p' "$f")
             for mismatch in $(echo "$versions" | grep -vF "$(cat rust-toolchain)" || true) ; do
               echo "::error file=\"${f}\"::Workflow uses incorrect rust version(s): $mismatch"
               ex=$((ex + 1))
