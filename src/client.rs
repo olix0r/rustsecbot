@@ -54,9 +54,8 @@ impl Client {
         &self,
         org: &str,
         repo: &str,
-        open_issues: Vec<hubcaps::issues::Issue>,
         advisories: Vec<crate::Advisory>,
-    ) -> Result<Vec<hubcaps::issues::Issue>> {
+    ) -> Result<Vec<(hubcaps::issues::Issue, crate::Advisory)>> {
         let gh = self
             .acquire(advisories.len() as u32)
             .await?
@@ -66,18 +65,15 @@ impl Client {
         // Ensure that we have enough rate limit remaining to create issues. If we
         let mut created = Vec::with_capacity(advisories.len());
         for advisory in advisories.into_iter() {
-            let title = advisory.title();
-            if !open_issues.iter().any(|i| i.title == title) {
-                let opts = IssueOptions {
-                    title,
-                    body: Some(advisory.body.clone()),
-                    assignee: None,
-                    milestone: None,
-                    labels: vec!["rust".to_string(), "security".to_string()],
-                };
-                let issue = gh.create(&opts).await?;
-                created.push(issue);
-            }
+            let opts = IssueOptions {
+                title: advisory.title(),
+                body: Some(advisory.body.clone()),
+                assignee: None,
+                milestone: None,
+                labels: vec!["rust".to_string(), "security".to_string()],
+            };
+            let issue = gh.create(&opts).await?;
+            created.push((issue, advisory));
         }
 
         Ok(created)

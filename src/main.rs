@@ -39,35 +39,38 @@ async fn main() -> Result<()> {
 
     // Ensure that the target directory contains a Cargo.lock. Otherwise there's no point in running
     // cargo-deny.
-    ensure_exists(directory.join("Cargo.lock")).await?;
+    ensure_file(directory.join("Cargo.lock")).await?;
 
-    let (advisories, open_issues) = tokio::try_join!(
-        // Run cargo-deny to determine the advisories for the given crate.
-        deny::advisories(cargo_deny_path, directory),
-        // Get the list of already-oopened issues with the expected labels.
-        github.list_issues(&github_organization, &github_repository)
-    )?;
+    // Before checking advisories get the list of already-opened issues with the expected labels.,
+    let open_issues = github
+        .list_issues(&github_organization, &github_repository)
+        .await?;
 
+    // Run cargo-deny to determine the advisories for the given crate.pen_issues
+    let mut advisories = deny::advisories(cargo_deny_path, directory).await?;
+
+    // Remove any advisories that have already been reported by comparing issue titles.
+    advisories.retain(|a| {
+        let title = a.title();
+        !open_issues.iter().any(|i| i.title == title)
+    });
+
+    // Create a new issue for each advisory that hasn't previously been reported.
     github
-        .create_issues(
-            &github_organization,
-            &github_repository,
-            open_issues,
-            advisories,
-        )
+        .create_issues(&github_organization, &github_repository, advisories)
         .await?;
 
     Ok(())
 }
 
-async fn ensure_exists(path: PathBuf) -> Result<()> {
-    if let Err(e) = tokio::fs::metadata(&path).await {
-        if e.kind() == std::io::ErrorKind::NotFound {
+// Errors if the specified path is not a file.
+async fn ensure_file(path: PathBuf) -> Result<()> {
+    match tokio::fs::metadata(&path).await {
+        Ok(m) if m.is_file() => Ok(()),
+        Ok(_) => anyhow::bail!("{} is not a file", path.display()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             anyhow::bail!("{} not found", path.display());
-        } else {
-            anyhow::bail!("failed to read {}: {}", path.display(), e);
         }
+        Err(e) => anyhow::bail!("failed to read {}: {}", path.display(), e),
     }
-
-    Ok(())
 }

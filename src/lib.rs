@@ -26,7 +26,7 @@ impl From<self::deny::output::Diagnostic> for Advisory {
 }
 
 impl Advisory {
-    fn title(&self) -> String {
+    pub fn title(&self) -> String {
         if let Some(progenitor) = &self.progenitor {
             format!("{}: [{}] {}", progenitor, self.id, self.message)
         } else {
