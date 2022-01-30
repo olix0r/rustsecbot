@@ -33,10 +33,6 @@ async fn main() -> Result<()> {
     // Build a rate-limited GitHub API client.
     let github = Client::spawn_rate_limited(github_token).await?;
 
-    // Ensure that the target directory contains a Cargo.lock. Otherwise there's no point in running
-    // cargo-deny.
-    ensure_file(directory.join("Cargo.lock")).await?;
-
     // Before checking advisories get the list of already-opened issues with the expected labels.,
     let open_issues = github.list_issues(&github_repository).await?;
     println!("::debug::{} open issues", open_issues.len());
@@ -78,16 +74,4 @@ async fn main() -> Result<()> {
     // to close these issues until they're removed from deny.toml.
 
     Ok(())
-}
-
-// Errors if the specified path is not a file.
-async fn ensure_file(path: PathBuf) -> Result<()> {
-    match tokio::fs::metadata(&path).await {
-        Ok(m) if m.is_file() => Ok(()),
-        Ok(_) => anyhow::bail!("{} is not a file", path.display()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            anyhow::bail!("{} not found", path.display());
-        }
-        Err(e) => anyhow::bail!("failed to read {}: {}", path.display(), e),
-    }
 }
