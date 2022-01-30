@@ -1,3 +1,4 @@
+use crate::GitHubRepo;
 use anyhow::{Context, Result};
 use hubcaps::{issues::*, Credentials, Github};
 use std::sync::Arc;
@@ -9,16 +10,29 @@ pub struct Client(Arc<Semaphore>, Github);
 impl Client {
     /// Create a client that watches its rate limit. The client delays work instead of violating the
     /// hinted limit.
-    pub fn spawn_rate_limited(token: String) -> Result<Self> {
+    pub async fn spawn_rate_limited(token: String) -> Result<Self> {
         let gh = Github::new(Self::user_agent(), Credentials::Token(token))?;
         let semaphore = Arc::new(Semaphore::new(0));
+        let (init_tx, init_rx) = tokio::sync::oneshot::channel();
 
         tokio::spawn({
             let gh = gh.clone();
+            let mut init = Some(init_tx);
             let handle = Arc::downgrade(&semaphore);
             async move {
                 while let Some(semaphore) = handle.upgrade() {
-                    let rate_limit = gh.rate_limit().get().await?;
+                    let result = gh.rate_limit().get().await;
+                    if let Some(tx) = init.take() {
+                        if let Err(e) = result {
+                            let _ = tx.send(Err(e));
+                            return Ok(());
+                        }
+                        if tx.send(Ok(())).is_err() {
+                            return Ok(());
+                        }
+                    }
+                    let rate_limit = result?;
+
                     let new_perms = (rate_limit.resources.core.remaining as usize)
                         .saturating_sub(semaphore.available_permits());
                     semaphore.add_permits(new_perms);
@@ -33,6 +47,11 @@ impl Client {
             }
         });
 
+        init_rx
+            .await
+            .expect("sender must not be dropped")
+            .context("failed to initialize GitHub client")?;
+
         Ok(Self(semaphore, gh))
     }
 
@@ -40,33 +59,36 @@ impl Client {
         format!("{}/{}", clap::crate_name!(), clap::crate_version!())
     }
 
-    pub async fn list_issues(&self, org: &str, repo: &str) -> Result<Vec<Issue>> {
+    pub async fn list_issues(&self, repo: &GitHubRepo) -> Result<Vec<Issue>> {
         let opts = IssueListOptions::builder()
             .state(State::Open)
             .labels(vec!["rust", "security"])
             .build();
         let gh = self.acquire(1).await?;
-        let issues = gh.repo(org, repo).issues().list(&opts).await?;
+        let issues = gh
+            .repo(&repo.owner, &repo.name)
+            .issues()
+            .list(&opts)
+            .await?;
         Ok(issues)
     }
 
     pub async fn create_issues(
         &self,
-        org: &str,
-        repo: &str,
+        repo: &GitHubRepo,
         advisories: Vec<crate::Advisory>,
     ) -> Result<Vec<(hubcaps::issues::Issue, crate::Advisory)>> {
         let gh = self
             .acquire(advisories.len() as u32)
             .await?
-            .repo(org, repo)
+            .repo(&repo.owner, &repo.name)
             .issues();
 
         // Ensure that we have enough rate limit remaining to create issues. If we
         let mut created = Vec::with_capacity(advisories.len());
         for advisory in advisories.into_iter() {
             let opts = IssueOptions {
-                title: advisory.title(),
+                title: advisory.title.clone(),
                 body: Some(advisory.body.clone()),
                 assignee: None,
                 milestone: None,

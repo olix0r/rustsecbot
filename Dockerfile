@@ -1,3 +1,5 @@
+# GitHub action dockerfile
+
 FROM docker.io/curlimages/curl:7.81.0 as cargo-deny
 ARG CARGO_DENY_VERSION=0.11.1
 WORKDIR /out
@@ -15,4 +17,5 @@ RUN --mount=type=cache,from=docker.io/rust:1.58.0-bullseye,source=/usr/local/car
 FROM gcr.io/distroless/cc:nonroot
 COPY --from=cargo-deny /out/cargo-deny /
 COPY --from=build /out/rustsec-issues /
+ENV CARGO_DENY_PATH=/cargo-deny
 ENTRYPOINT ["/rustsec-issues"]
