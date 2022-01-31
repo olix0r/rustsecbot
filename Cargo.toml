@@ -19,6 +19,8 @@ features = ["cargo", "derive", "env", "std"]
 version = "0.6"
 git = "https://github.com/olix0r/hubcaps.git"
 branch = "ver/feature-jwt"
+default-features = false
+features = ["default-tls"]
 
 [dependencies.tokio]
 version = "1"
