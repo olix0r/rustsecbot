@@ -35,20 +35,20 @@ async fn main() -> Result<()> {
 
     // Before checking advisories get the list of already-opened issues with the expected labels.,
     let open_issues = github.list_issues(&github_repository).await?;
-    println!("::debug::{} open issues", open_issues.len());
+    println!("{} open issues", open_issues.len());
     for i in &open_issues {
-        println!("::debug::  {}: {}", i.id, i.title);
+        println!("  {}: {}", i.id, i.title);
     }
 
     // Run cargo-deny to determine the advisories for the given crate.pen_issues
     let mut advisories = deny::advisories(cargo_deny_path, directory).await?;
-    println!("::debug::found {} active advisories", advisories.len());
+    println!("found {} active advisories", advisories.len());
 
     // Remove any advisories that have already been reported by comparing issue titles.
     advisories.retain(|a| !open_issues.iter().any(|i| i.title == a.title));
-    println!("::debug::{} new advisories", advisories.len());
+    println!("{} new advisories", advisories.len());
     for a in &advisories {
-        println!("::debug::  {}", a.title);
+        println!("  {}", a.title);
     }
 
     // Create a new issue for each advisory that hasn't previously been reported.

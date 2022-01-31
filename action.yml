@@ -3,7 +3,12 @@ description: 'Creates issues from RUSTSEC advisories'
 
 # TODO:
 # - Custom labels
-inputs: {}
+inputs:
+  token:
+    description: |
+      GitHub token with 'issues:write' scope
+    required: true
+    default: ${{ github.token }}
 
 outputs:
   opened:
@@ -11,7 +16,7 @@ outputs:
 
 runs:
   using: 'docker'
-  # TODO image: 'docker://ghcr.io/olix0r/rustsecbot:v1'
-  image: 'Dockerfile'
+  image: 'docker://ghcr.io/olix0r/rustsecbot:v1'
+  # image: 'Dockerfile'
   args:
-    - --github-token="${{ secrets.GITHUB_TOKEN }}"
+    - --github-token=${{ inputs.token }}
