@@ -2,7 +2,7 @@
 
 ARG CURL_IMAGE=docker.io/curlimages/curl:7.81.0
 ARG RUST_IMAGE=docker.io/rust:1.58.0-bullseye
-ARG RUNTIME_IMAGE=gcr.io/distroless/cc:nonroot
+ARG RUNTIME_IMAGE=docker.io/rust:1.58.0-slim-bullseye
 
 FROM $CURL_IMAGE as cargo-deny
 ARG CARGO_DENY_VERSION=0.11.1
@@ -12,14 +12,11 @@ RUN curl --proto '=https' --tlsv1.3 --retry 2 -vsSfL "https://github.com/EmbarkS
 
 FROM $RUST_IMAGE as build
 WORKDIR /build
-RUN mkdir /out
 COPY . .
-RUN --mount=type=cache,from=docker.io/rust:1.58.0-bullseye,source=/usr/local/cargo,target=/usr/local/cargo \
-    --mount=type=cache,target=target \
-    cargo build --release && mv target/release/rustsecbot /out
+RUN cargo build --release && mv target/release/rustsecbot /tmp
 
 FROM $RUNTIME_IMAGE
 COPY --from=cargo-deny /tmp/cargo-deny /
-COPY --from=build /out/rustsecbot /
+COPY --from=build /tmp/rustsecbot /
 ENV CARGO_DENY_PATH=/cargo-deny
 ENTRYPOINT ["/rustsecbot"]
