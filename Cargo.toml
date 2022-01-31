@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    ".",
+    "time-test",
+]
+
 [package]
 name = "rustsecbot"
 version = "0.1.0"
