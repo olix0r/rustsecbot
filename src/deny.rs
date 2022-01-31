@@ -11,7 +11,9 @@ pub async fn advisories(cargo_deny_path: PathBuf, target_dir: PathBuf) -> Result
         status: _,
         stdout: _,
     } = tokio::process::Command::new(cargo_deny_path)
-        .args(vec!["--format=json", "check", "advisories"])
+        // TODO we should optionally set all-features. This may be problematic for some crates, so
+        // it should't be the default.
+        .args(vec!["--format=json", "--workspace", "check", "advisories"])
         .current_dir(target_dir)
         .output()
         .await?;
