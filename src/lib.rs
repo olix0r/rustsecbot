@@ -1,9 +1,10 @@
 #![deny(warnings, rust_2018_idioms)]
 
 pub mod client;
+pub mod config;
 pub mod deny;
 
-pub use self::client::Client;
+pub use self::{client::Client, config::Config};
 
 #[derive(Clone, Debug)]
 pub struct GitHubRepo {
@@ -17,15 +18,16 @@ pub struct Advisory {
     pub id: String,
     pub body: String,
     pub withdrawn: bool,
+    pub crate_name: Option<String>,
 }
 
 // === impl Advisory ===
 
 impl From<self::deny::output::Diagnostic> for Advisory {
     fn from(d: self::deny::output::Diagnostic) -> Self {
-        let progenitor = Self::find_progenitor(d.graphs);
-        let title = if let Some(progenitor) = &progenitor {
-            format!("{}: [{}] {}", progenitor, d.advisory.id, d.message)
+        let crate_name = Self::find_progenitor(d.graphs);
+        let title = if let Some(c) = &crate_name {
+            format!("{}: [{}] {}", c, d.advisory.id, d.message)
         } else {
             format!("[{}] {}", d.advisory.id, d.message)
         };
@@ -34,6 +36,7 @@ impl From<self::deny::output::Diagnostic> for Advisory {
             id: d.advisory.id,
             body: d.advisory.description,
             withdrawn: d.advisory.withdrawn.is_some(),
+            crate_name,
         }
     }
 }

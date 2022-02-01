@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use rustsecbot::{deny, Client, GitHubRepo};
+use rustsecbot::{deny, Client, Config, GitHubRepo};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Parser)]
@@ -13,6 +13,15 @@ struct Args {
 
     #[clap(default_value = ".", long, parse(from_os_str), short = 'd')]
     directory: PathBuf,
+
+    /// Path to the rustsecbot configuration file
+    #[clap(
+        default_value = ".github/rustsecbot.yml",
+        long,
+        parse(from_os_str),
+        short = 'c'
+    )]
+    config_path: PathBuf,
 
     #[clap(env, long, short = 'r')]
     github_repository: GitHubRepo,
@@ -25,13 +34,18 @@ struct Args {
 async fn main() -> Result<()> {
     let Args {
         cargo_deny_path,
+        config_path,
         directory,
         github_repository,
         github_token,
     } = Args::parse();
 
+    let config = Config::maybe_from_yaml(&config_path)
+        .await?
+        .unwrap_or_default();
+
     // Build a rate-limited GitHub API client.
-    let github = Client::spawn_rate_limited(github_token).await?;
+    let github = Client::spawn_rate_limited(config, github_token).await?;
 
     // Before checking advisories get the list of already-opened issues with the expected labels.,
     let open_issues = github.list_issues(&github_repository).await?;
