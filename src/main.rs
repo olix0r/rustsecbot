@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
         for i in &open_issues {
             println!("  {}: {}", i.id, i.title);
         }
-        println!("::endgroup");
+        println!("::endgroup::");
     }
 
     // Run cargo-deny to determine the advisories for the given crate.pen_issues
@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
         for a in &advisories {
             eprintln!("  {}", a.title);
         }
-        eprintln!("::endgroup");
+        eprintln!("::endgroup::");
         std::process::exit(1);
     }
 
@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
     for a in &advisories {
         println!("  {}", a.title);
     }
-    println!("::endgroup");
+    println!("::endgroup::");
 
     // Create a new issue for each advisory that hasn't previously been reported.
     let opened = github
@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
     for (i, _) in &opened {
         println!("Opened {}: {}", i.id, i.title);
     }
-    println!("::endgroup");
+    println!("::endgroup::");
 
     println!(
         "::set-output name=opened::{}",
