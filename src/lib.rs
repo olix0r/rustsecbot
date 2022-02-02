@@ -1,10 +1,11 @@
 #![deny(warnings, rust_2018_idioms)]
 
+use std::convert::Infallible;
+
 pub mod client;
-pub mod config;
 pub mod deny;
 
-pub use self::{client::Client, config::Config};
+pub use self::client::Client;
 
 #[derive(Clone, Debug)]
 pub struct GitHubRepo {
@@ -20,6 +21,9 @@ pub struct Advisory {
     pub withdrawn: bool,
     pub crate_name: Option<String>,
 }
+
+#[derive(Clone, Debug)]
+pub struct Labels(Vec<String>);
 
 // === impl Advisory ===
 
@@ -79,5 +83,26 @@ impl std::str::FromStr for GitHubRepo {
             owner: owner.to_string(),
             name: name.to_string(),
         })
+    }
+}
+
+// === impl Labels ===
+
+impl std::str::FromStr for Labels {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Infallible> {
+        let labels = s
+            .split(',')
+            .map(|l| l.trim())
+            .filter_map(|l| {
+                if l.is_empty() {
+                    None
+                } else {
+                    Some(l.to_string())
+                }
+            })
+            .collect();
+        Ok(Labels(labels))
     }
 }

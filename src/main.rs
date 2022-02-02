@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use rustsecbot::{deny, Client, Config, GitHubRepo};
+use rustsecbot::{deny, Client, GitHubRepo, Labels};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Parser)]
@@ -15,13 +15,8 @@ struct Args {
     directory: PathBuf,
 
     /// Path to the rustsecbot configuration file
-    #[clap(
-        default_value = ".github/rustsecbot.yml",
-        long,
-        parse(from_os_str),
-        short = 'c'
-    )]
-    config_path: PathBuf,
+    #[clap(default_value = "rust,security", long)]
+    labels: Labels,
 
     #[clap(env, long, short = 'r')]
     github_repository: GitHubRepo,
@@ -34,21 +29,19 @@ struct Args {
 async fn main() -> Result<()> {
     let Args {
         cargo_deny_path,
-        config_path,
+        labels,
         directory,
         github_repository,
         github_token,
     } = Args::parse();
 
-    let config = Config::maybe_from_yaml(&config_path)
-        .await?
-        .unwrap_or_default();
-
     // Build a rate-limited GitHub API client.
-    let github = Client::spawn_rate_limited(config, github_token).await?;
+    let github = Client::spawn_rate_limited(github_token).await?;
 
     // Before checking advisories get the list of already-opened issues with the expected labels.,
-    let open_issues = github.list_issues(&github_repository).await?;
+    let open_issues = github
+        .list_issues(&github_repository, labels.clone())
+        .await?;
     println!("{} open issues", open_issues.len());
     for i in &open_issues {
         println!("  {}: {}", i.id, i.title);
@@ -66,7 +59,9 @@ async fn main() -> Result<()> {
     }
 
     // Create a new issue for each advisory that hasn't previously been reported.
-    let opened = github.create_issues(&github_repository, advisories).await?;
+    let opened = github
+        .create_issues(&github_repository, advisories, labels)
+        .await?;
 
     println!("::group::{} new issues", opened.len());
     for (i, _) in &opened {

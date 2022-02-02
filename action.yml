@@ -2,11 +2,11 @@ name: RUSTSEC Bot
 description: 'Creates issues from RUSTSEC advisories'
 
 inputs:
-  config:
+  labels:
     description: |
-      RustSecBot configuration file
+      Comma-separated list of labels to add to the issue.
     required: true
-    default: .github/rustsecbot.yml
+    default: rust,security
 
   token:
     description: |
@@ -23,5 +23,7 @@ runs:
   image: 'docker://ghcr.io/olix0r/rustsecbot:v1'
   # image: 'Dockerfile'
   args:
-    - --config=${{ inputs.config }}
-    - --github-token=${{ inputs.token }}
+    - --github-token
+    - ${{ inputs.token }}
+    - --labels
+    - ${{ inputs.labels }}

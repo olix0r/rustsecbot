@@ -1,4 +1,4 @@
-use crate::{Config, GitHubRepo};
+use crate::{GitHubRepo, Labels};
 use anyhow::{Context, Result};
 use hubcaps::{issues::*, Credentials, Github};
 use std::sync::Arc;
@@ -7,14 +7,13 @@ use tokio::sync::Semaphore;
 #[derive(Clone, Debug)]
 pub struct Client {
     api: Github,
-    config: Config,
     rate_limit: Arc<Semaphore>,
 }
 
 impl Client {
     /// Create a client that watches its rate limit. The client delays work instead of violating the
     /// hinted limit.
-    pub async fn spawn_rate_limited(config: Config, token: String) -> Result<Self> {
+    pub async fn spawn_rate_limited(token: String) -> Result<Self> {
         let api = Github::new(Self::user_agent(), Credentials::Token(token))?;
         let rate_limit = Arc::new(Semaphore::new(0));
         let (init_tx, init_rx) = tokio::sync::oneshot::channel();
@@ -56,21 +55,17 @@ impl Client {
             .expect("sender must not be dropped")
             .context("failed to initialize GitHub client")?;
 
-        Ok(Self {
-            rate_limit,
-            api,
-            config,
-        })
+        Ok(Self { rate_limit, api })
     }
 
     fn user_agent() -> String {
         format!("{}/{}", clap::crate_name!(), clap::crate_version!())
     }
 
-    pub async fn list_issues(&self, repo: &GitHubRepo) -> Result<Vec<Issue>> {
+    pub async fn list_issues(&self, repo: &GitHubRepo, labels: Labels) -> Result<Vec<Issue>> {
         let opts = IssueListOptions::builder()
             .state(State::Open)
-            .labels(self.config.labels.clone())
+            .labels(labels.0)
             .build();
         let api = self.acquire(1).await?;
         let issues = api
@@ -85,6 +80,7 @@ impl Client {
         &self,
         repo: &GitHubRepo,
         advisories: Vec<crate::Advisory>,
+        labels: Labels,
     ) -> Result<Vec<(hubcaps::issues::Issue, crate::Advisory)>> {
         let api = self
             .acquire(advisories.len() as u32)
@@ -95,26 +91,10 @@ impl Client {
         // Ensure that we have enouapi rate limit remaining to create issues. If we
         let mut created = Vec::with_capacity(advisories.len());
         for advisory in advisories.into_iter() {
-            let labels = {
-                let base_labels = self.config.labels.iter().cloned();
-                let crate_labels = advisory
-                    .crate_name
-                    .as_ref()
-                    .map(|cn| {
-                        self.config
-                            .crates
-                            .get(cn)
-                            .as_ref()
-                            .map(|c| c.labels.clone())
-                            .unwrap_or_default()
-                    })
-                    .unwrap_or_default();
-                base_labels.into_iter().chain(crate_labels).collect()
-            };
             let opts = IssueOptions {
                 title: advisory.title.clone(),
                 body: Some(advisory.body.clone()),
-                labels,
+                labels: labels.0.clone(),
                 assignee: None,
                 milestone: None,
             };

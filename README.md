@@ -5,28 +5,11 @@ impact a Rust project.
 
 ## Inputs
 
-### `config`
+### `labels`
 
-A YAML-formatted configuration file.
+A comma-separated list of labels for impacted issues.
 
-Default: `.github/rustsecbot.yml`.
-
-#### Example config file
-
-```yaml
-# Labels that apply to all rustsecbot issues.
-labels:
-  - lang/rust
-  - security
-
-# Per-crate configuration. rustsecbot uses the top crate in the deepest
-# dependency path to the impact crate as the key.
-crates:
-  foo:
-    labels: ["crate/foo"]
-  bar:
-    labels: ["crates/bar"]
-```
+Default: _rust,security_
 
 ### `token`
 
@@ -53,6 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: olix0r/rustsecbot@v1
+        with:
+          labels: area/myapp,rust,security
 ```
 
 <!-- refs -->
