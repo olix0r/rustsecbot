@@ -11,10 +11,14 @@ struct Args {
     #[clap(default_value = "cargo-deny", env, long, parse(from_os_str))]
     cargo_deny_path: PathBuf,
 
+    /// Print advisories and exit without creating issues.
+    #[clap(long)]
+    check: bool,
+
     #[clap(default_value = ".", long, parse(from_os_str), short = 'd')]
     directory: PathBuf,
 
-    /// Path to the rustsecbot configuration file
+    /// Labels that apply to issues created by this tool.
     #[clap(default_value = "rust,security", long)]
     labels: Labels,
 
@@ -29,6 +33,7 @@ struct Args {
 async fn main() -> Result<()> {
     let Args {
         cargo_deny_path,
+        check,
         labels,
         directory,
         github_repository,
@@ -53,6 +58,20 @@ async fn main() -> Result<()> {
 
     // Remove any advisories that have already been reported by comparing issue titles.
     advisories.retain(|a| !open_issues.iter().any(|i| i.title == a.title));
+
+    if check {
+        // Skip creating issues.
+        if advisories.is_empty() {
+            return Ok(());
+        }
+
+        eprintln!("{} new advisories", advisories.len());
+        for a in &advisories {
+            eprintln!("  {}", a.title);
+        }
+        std::process::exit(1);
+    }
+
     println!("{} new advisories", advisories.len());
     for a in &advisories {
         println!("  {}", a.title);
