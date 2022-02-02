@@ -8,6 +8,12 @@ inputs:
     required: true
     default: rust,security
 
+  mode:
+    description: |
+      'report' to create issues from RUSTSEC advisories and 'check' to run without creating issues.
+    required: true
+    default: "report"
+
   token:
     description: |
       GitHub token with the 'issues:write' scope
@@ -27,3 +33,5 @@ runs:
     - ${{ inputs.token }}
     - --labels
     - ${{ inputs.labels }}
+    - --mode
+    - ${{ inputs.mode }}

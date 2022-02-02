@@ -12,8 +12,8 @@ struct Args {
     cargo_deny_path: PathBuf,
 
     /// Print advisories and exit without creating issues.
-    #[clap(long)]
-    check: bool,
+    #[clap(default_value = "report", long)]
+    mode: Mode,
 
     #[clap(default_value = ".", long, parse(from_os_str), short = 'd')]
     directory: PathBuf,
@@ -29,15 +29,33 @@ struct Args {
     github_token: String,
 }
 
+#[derive(Copy, Clone, Debug)]
+enum Mode {
+    Check,
+    Report,
+}
+
+impl std::str::FromStr for Mode {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match &*s.to_ascii_lowercase() {
+            "check" => Ok(Self::Check),
+            "report" => Ok(Self::Report),
+            _ => Err(anyhow::anyhow!("invalid mode: {}", s)),
+        }
+    }
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let Args {
         cargo_deny_path,
-        check,
-        labels,
         directory,
         github_repository,
         github_token,
+        labels,
+        mode,
     } = Args::parse();
 
     // Build a rate-limited GitHub API client.
@@ -59,7 +77,7 @@ async fn main() -> Result<()> {
     // Remove any advisories that have already been reported by comparing issue titles.
     advisories.retain(|a| !open_issues.iter().any(|i| i.title == a.title));
 
-    if check {
+    if let Mode::Check = mode {
         // Skip creating issues.
         if advisories.is_empty() {
             return Ok(());
