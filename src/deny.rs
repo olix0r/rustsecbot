@@ -18,7 +18,7 @@ pub async fn advisories(cargo_deny_path: PathBuf, target_dir: PathBuf) -> Result
         .output()
         .await?;
 
-    println!("{}", String::from_utf8_lossy(&stderr));
+    // println!("::debug::{}", String::from_utf8_lossy(&stderr));
     serde_json::Deserializer::from_slice(&*stderr)
         .into_iter::<output::Object>()
         .map(|r| r.map_err(anyhow::Error::from))

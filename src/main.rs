@@ -65,9 +65,12 @@ async fn main() -> Result<()> {
     let open_issues = github
         .list_issues(&github_repository, labels.clone())
         .await?;
-    println!("{} open issues", open_issues.len());
-    for i in &open_issues {
-        println!("  {}: {}", i.id, i.title);
+    if !open_issues.is_empty() {
+        println!("::group::{} open issues", open_issues.len());
+        for i in &open_issues {
+            println!("  {}: {}", i.id, i.title);
+        }
+        println!("::endgroup");
     }
 
     // Run cargo-deny to determine the advisories for the given crate.pen_issues
@@ -76,24 +79,26 @@ async fn main() -> Result<()> {
 
     // Remove any advisories that have already been reported by comparing issue titles.
     advisories.retain(|a| !open_issues.iter().any(|i| i.title == a.title));
+    if advisories.is_empty() {
+        println!("no new advisories");
+        return Ok(());
+    }
 
     if let Mode::Check = mode {
         // Skip creating issues.
-        if advisories.is_empty() {
-            return Ok(());
-        }
-
-        eprintln!("{} new advisories", advisories.len());
+        eprintln!("::group::{} new advisories", advisories.len());
         for a in &advisories {
             eprintln!("  {}", a.title);
         }
+        eprintln!("::endgroup");
         std::process::exit(1);
     }
 
-    println!("{} new advisories", advisories.len());
+    println!("::group::{} new advisories", advisories.len());
     for a in &advisories {
         println!("  {}", a.title);
     }
+    println!("::endgroup");
 
     // Create a new issue for each advisory that hasn't previously been reported.
     let opened = github
