@@ -50,7 +50,10 @@ impl Advisory {
         fn find(g: &self::deny::output::Graph) -> (usize, String) {
             g.parents
                 .iter()
-                .map(find)
+                .map(|p| {
+                    let (d, n) = find(p);
+                    (d + 1, n)
+                })
                 .max_by_key(|(d, _)| *d)
                 .unwrap_or_else(|| (0, g.name.clone()))
         }
@@ -61,6 +64,43 @@ impl Advisory {
             .max_by_key(|(d, _)| *d)
             .map(|(_, n)| n)
     }
+}
+
+#[cfg(test)]
+#[test]
+fn test_find_progenitor() {
+    use self::deny::output::Graph;
+
+    let baz = Graph {
+        name: "baz".to_string(),
+        parents: vec![],
+        repeat: false,
+        version: "0.1.0".into(),
+    };
+    let bar = Graph {
+        name: "bar".to_string(),
+        parents: vec![baz],
+        repeat: false,
+        version: "0.1.0".into(),
+    };
+    let bah = Graph {
+        name: "bah".to_string(),
+        parents: vec![],
+        repeat: false,
+        version: "0.1.0".into(),
+    };
+    let foo = Graph {
+        name: "foo".to_string(),
+        parents: vec![bar, bah],
+        repeat: false,
+        version: "0.1.0".into(),
+    };
+
+    assert_eq!(
+        Some("baz".to_string()),
+        Advisory::find_progenitor(vec![foo])
+    );
+    assert_eq!(None, Advisory::find_progenitor(vec![]));
 }
 
 // === impl GitHubRepo ===
