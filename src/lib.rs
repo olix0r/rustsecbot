@@ -77,34 +77,40 @@ impl Advisory {
 fn test_find_progenitor() {
     use self::deny::output::Graph;
 
-    let baz = Graph {
-        name: "baz".to_string(),
-        parents: vec![],
-        repeat: false,
-        version: "0.1.0".into(),
-    };
-    let bar = Graph {
-        name: "bar".to_string(),
-        parents: vec![baz],
-        repeat: false,
-        version: "0.1.0".into(),
-    };
-    let bah = Graph {
-        name: "bah".to_string(),
-        parents: vec![],
-        repeat: false,
-        version: "0.1.0".into(),
-    };
-    let foo = Graph {
-        name: "foo".to_string(),
-        parents: vec![bar, bah],
+    let graph = Graph {
+        name: "leaf".to_string(),
+        parents: vec![
+            Graph {
+                name: "node0".to_string(),
+                parents: vec![],
+                repeat: false,
+                version: "0.1.0".into(),
+            },
+            Graph {
+                name: "node1".to_string(),
+                parents: vec![Graph {
+                    name: "root".to_string(),
+                    parents: vec![],
+                    repeat: false,
+                    version: "0.1.0".into(),
+                }],
+                repeat: false,
+                version: "0.1.0".into(),
+            },
+            Graph {
+                name: "node2".to_string(),
+                parents: vec![],
+                repeat: false,
+                version: "0.1.0".into(),
+            },
+        ],
         repeat: false,
         version: "0.1.0".into(),
     };
 
     assert_eq!(
-        Some("baz".to_string()),
-        Advisory::find_progenitor(vec![foo])
+        Some("root".to_string()),
+        Advisory::find_progenitor(vec![graph])
     );
     assert_eq!(None, Advisory::find_progenitor(vec![]));
 }
