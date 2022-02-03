@@ -50,15 +50,15 @@ jobs:
       with:
         command: check bans licenses sources
 
-  # test:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 15
-  #   container:
-  #     image: docker://docker.io/rust:1.58.0
-  #   steps:
-  #     - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
-  #     - run: cargo test --no-run
-  #     - run: cargo test
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: docker://docker.io/rust:1.58.0
+    steps:
+      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+      - run: cargo test --no-run
+      - run: cargo test
 
   rust-toolchain:
     name: rust toolchain
