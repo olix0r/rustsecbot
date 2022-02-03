@@ -27,21 +27,27 @@ pub struct Labels(Vec<String>);
 
 // === impl Advisory ===
 
-impl From<self::deny::output::Diagnostic> for Advisory {
-    fn from(d: self::deny::output::Diagnostic) -> Self {
+impl TryFrom<self::deny::output::Diagnostic> for Advisory {
+    type Error = self::deny::output::Diagnostic;
+
+    fn try_from(d: self::deny::output::Diagnostic) -> Result<Self, Self::Error> {
+        let a = match d.advisory {
+            Some(a) => a,
+            None => return Err(d),
+        };
         let crate_name = Self::find_progenitor(d.graphs);
         let title = if let Some(c) = &crate_name {
-            format!("{}: [{}] {}", c, d.advisory.id, d.message)
+            format!("{}: [{}] {}", c, a.id, d.message)
         } else {
-            format!("[{}] {}", d.advisory.id, d.message)
+            format!("[{}] {}", a.id, d.message)
         };
-        Self {
+        Ok(Self {
             title,
-            id: d.advisory.id,
-            body: d.advisory.description,
-            withdrawn: d.advisory.withdrawn.is_some(),
+            id: a.id,
+            body: a.description,
+            withdrawn: a.withdrawn.is_some(),
             crate_name,
-        }
+        })
     }
 }
 

@@ -18,12 +18,12 @@ pub async fn advisories(cargo_deny_path: PathBuf, target_dir: PathBuf) -> Result
         .output()
         .await?;
 
-    // println!("::debug::{}", String::from_utf8_lossy(&stderr));
+    println!("::debug::{}", String::from_utf8_lossy(&stderr));
     serde_json::Deserializer::from_slice(&*stderr)
         .into_iter::<output::Object>()
         .map(|r| r.map_err(anyhow::Error::from))
         .filter_map(|d| match d {
-            Ok(output::Object::Diagnostic(d)) => Some(Ok(Advisory::from(d))),
+            Ok(output::Object::Diagnostic(d)) => Advisory::try_from(d).ok().map(Ok),
             Ok(_) => None,
             Err(e) => Some(Err(e)),
         })
@@ -55,7 +55,7 @@ pub(crate) mod output {
 
     #[derive(Clone, Debug, Deserialize)]
     pub struct Diagnostic {
-        pub advisory: Advisory,
+        pub advisory: Option<Advisory>,
         pub code: String,
         pub message: String,
         pub graphs: Vec<Graph>,
@@ -98,5 +98,16 @@ pub(crate) mod output {
         pub line: usize,
         pub message: String,
         pub span: String,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    pub use super::output::*;
+
+    #[test]
+    fn irrelevant() {
+        let json = r#"{"fields":{"code":"A007","graphs":[],"labels":[{"column":5,"line":16,"message":"no crate matched advisory criteria","span":"\"RUSTSEC-2020-0071\""}],"message":"advisory was not encountered","severity":"warning"},"type":"diagnostic"}"#;
+        serde_json::from_str::<Object>(json).except("object must parse");
     }
 }
