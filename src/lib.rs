@@ -35,7 +35,7 @@ impl TryFrom<self::deny::output::Diagnostic> for Advisory {
             Some(a) => a,
             None => return Err(d),
         };
-        let crate_name = Self::find_progenitor(d.graphs);
+        let crate_name = d.graphs.and_then(Self::find_progenitor);
         let title = if let Some(c) = &crate_name {
             format!("{}: [{}] {}", c, a.id, d.message)
         } else {

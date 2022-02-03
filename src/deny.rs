@@ -58,9 +58,9 @@ pub(crate) mod output {
         pub advisory: Option<Advisory>,
         pub code: String,
         pub message: String,
-        pub graphs: Vec<Graph>,
-        pub labels: Vec<Label>,
-        pub notes: Vec<String>,
+        pub graphs: Option<Vec<Graph>>,
+        pub labels: Option<Vec<Label>>,
+        pub notes: Option<Vec<String>>,
         pub severity: String,
     }
 
@@ -108,6 +108,6 @@ mod tests {
     #[test]
     fn irrelevant() {
         let json = r#"{"fields":{"code":"A007","graphs":[],"labels":[{"column":5,"line":16,"message":"no crate matched advisory criteria","span":"\"RUSTSEC-2020-0071\""}],"message":"advisory was not encountered","severity":"warning"},"type":"diagnostic"}"#;
-        serde_json::from_str::<Object>(json).except("object must parse");
+        serde_json::from_str::<Object>(json).expect("object must parse");
     }
 }
