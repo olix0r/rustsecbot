@@ -277,7 +277,7 @@ checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 [[package]]
 name = "hubcaps"
 version = "0.6.2"
-source = "git+https://github.com/olix0r/hubcaps.git?branch=ver/feature-jwt#b52b865bbb2a47dc18663ca8ec5346f53a6b7e7f"
+source = "git+https://github.com/softprops/hubcaps.git?rev=30bbb3a66bc85a062bab15bb10818395a387dcce#30bbb3a66bc85a062bab15bb10818395a387dcce"
 dependencies = [
  "base64",
  "data-encoding",

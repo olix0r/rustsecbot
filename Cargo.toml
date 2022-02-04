@@ -17,8 +17,8 @@ features = ["cargo", "derive", "env", "std"]
 # We use a modified version of `clap` that omits JWT-related dependencies.
 [dependencies.hubcaps]
 version = "0.6"
-git = "https://github.com/olix0r/hubcaps.git"
-branch = "ver/feature-jwt"
+git = "https://github.com/softprops/hubcaps.git"
+rev = "30bbb3a66bc85a062bab15bb10818395a387dcce"
 default-features = false
 features = ["default-tls"]
 
