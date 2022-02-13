@@ -29,7 +29,7 @@ jobs:
           chmod 755 /usr/local/bin/cargo-action-fmt
       - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
       - run: cargo fetch
-      - run: cargo clippy --all-targets --frozen --message-format=json | check-action-fmt
+      - run: cargo clippy --all-targets --frozen --message-format=json | cargo-action-fmt
       - run: cargo fmt -- --check
 
   docker:
