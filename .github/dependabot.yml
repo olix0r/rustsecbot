@@ -6,15 +6,6 @@ updates:
       interval: weekly
       time: "03:00"
       timezone: UTC
-    ignore:
-      - dependency-name: "clap_derive"
-      - dependency-name: "futures-channel"
-      - dependency-name: "futures-core"
-      - dependency-name: "futures-io"
-      - dependency-name: "futures-sink"
-      - dependency-name: "futures-task"
-      - dependency-name: "futures-util"
-      - dependency-name: "tracing-core"
 
   - package-ecosystem: cargo
     directory: /
@@ -24,4 +15,13 @@ updates:
       timezone: UTC
     allow:
       - dependency-type: all
+    ignore:
+      - dependency-name: "clap_derive"
+      - dependency-name: "futures-channel"
+      - dependency-name: "futures-core"
+      - dependency-name: "futures-io"
+      - dependency-name: "futures-sink"
+      - dependency-name: "futures-task"
+      - dependency-name: "futures-util"
+      - dependency-name: "tracing-core"
 
