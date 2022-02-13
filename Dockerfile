@@ -1,8 +1,8 @@
 # GitHub action dockerfile
 
 ARG CURL_IMAGE=docker.io/curlimages/curl:7.81.0
-ARG RUST_IMAGE=docker.io/rust:1.58.0-bullseye
-ARG RUNTIME_IMAGE=docker.io/rust:1.58.0-slim-bullseye
+ARG RUST_IMAGE=docker.io/rust:1.58.1-bullseye
+ARG RUNTIME_IMAGE=docker.io/rust:1.58.1-slim-bullseye
 
 FROM $CURL_IMAGE as cargo-deny
 ARG CARGO_DENY_VERSION=0.11.1
