@@ -6,6 +6,7 @@ on:
       - main
   pull_request:
     paths:
+      - action.yml
       - .github/workflows/rustsec.yml
   schedule:
     - cron: '0 0 * * *'
