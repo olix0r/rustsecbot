@@ -2,15 +2,11 @@ name: Pull Request
 
 on:
   pull_request: {}
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
 
 env:
-  CARGO_ACTION_FMT_VERSION: v0.1.2
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
   RUST_BACKTRACE: short
@@ -21,23 +17,14 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     container:
-      image: docker://docker.io/rust:1.60
+      image: docker://docker.io/rust:1.60.0
     steps:
       - run: rustup component add clippy rustfmt
-      - run: |
-          curl --proto =https --tlsv1.3 -vsSfLo /usr/local/bin/cargo-action-fmt "https://github.com/olix0r/cargo-action-fmt/releases/download/release%2F${CARGO_ACTION_FMT_VERSION}/cargo-action-fmt-x86_64-unknown-linux-gnu"
-          chmod 755 /usr/local/bin/cargo-action-fmt
+      - uses: olix0r/cargo-action-fmt@ee1ef42932e44794821dab57ef1bf7a73df8b21f
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
-      - run: cargo fetch
+      - run: cargo fetch --locked
       - run: cargo clippy --all-targets --frozen --message-format=json | cargo-action-fmt
       - run: cargo fmt -- --check
-
-  docker:
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
-      - run: docker build . --progress plain
 
   audit:
     timeout-minutes: 10
@@ -59,11 +46,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
-      image: docker://docker.io/rust:1.60
+      image: docker://docker.io/rust:1.60.0
     steps:
+      - uses: olix0r/cargo-action-fmt@ee1ef42932e44794821dab57ef1bf7a73df8b21f
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
-      - run: cargo fetch
-      - run: cargo test --no-run --frozen
+      - run: cargo fetch --locked
+      - run: cargo test --no-run --frozen --message-format=json | cargo-action-fmt
       - run: cargo test --frozen
 
   rust-toolchain:
@@ -82,13 +70,6 @@ jobs:
               echo "::error file=${f}::Workflow uses incorrect rust version(s): $mismatch"
               ex=$((ex + 1))
             done
-          done
-
-          # Check the main Dockerfile against the version in rust-toolchain.
-          versions=$(sed -nE 's|ARG RUST_IMAGE=(.*/)?rust:([^ #]+).*|\2|p' Dockerfile)
-          for mismatch in $(echo "$versions" | grep -vF "$(cat rust-toolchain)" || true) ; do
-            echo "::error file=Dockerfile::Dockerfile uses incorrect rust version(s): $mismatch"
-            ex=$((ex + 1))
           done
 
           exit $ex
