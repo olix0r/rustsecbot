@@ -1,37 +1,45 @@
 name: RUSTSEC Bot
-description: 'Creates issues from RUSTSEC advisories'
+description: Creates issues from RUSTSEC advisories
 
 inputs:
   labels:
-    description: |
-      Comma-separated list of labels to add to the issue.
+    description: Comma-separated list of labels to add to the issue
     required: true
     default: rust,security
 
   mode:
     description: |
-      'report' to create issues from RUSTSEC advisories and 'check' to run without creating issues.
+      'report' to create issues from RUSTSEC advisories; or 'check' to run without creating issues
     required: true
-    default: "report"
+    default: report
 
   token:
-    description: |
-      GitHub token with the 'issues:write' scope
+    description: GitHub token with the 'issues:write' scope
     required: true
     default: ${{ github.token }}
 
+  version:
+    description: The version of rustsecbot to use
+    required: false
+    default: v0.2.0
+
 outputs:
   opened:
-    description: 'List of issues/advisories that were opened'
+    description: List of issues/advisories that were opened
 
 runs:
-  using: 'docker'
-  image: 'docker://ghcr.io/olix0r/rustsecbot:v1'
-  # image: 'Dockerfile'
-  args:
-    - --github-token
-    - ${{ inputs.token }}
-    - --labels
-    - ${{ inputs.labels }}
-    - --mode
-    - ${{ inputs.mode }}
+  using: composite
+  steps:
+    - name: Install rustsecbot
+      shell: bash
+      run: |
+        curl --proto '=https' --tlsv1.3 -fsSLo /usr/local/bin/rustsecbot "https://github.com/olix0r/rustsecbot/releases/download/release%2F${{ inputs.version }}/rustsecbot-x86_64-unknown-linux-gnu"
+        chmod 755 /usr/local/bin/rustsecbot
+
+    - name: Run rustsecbot
+      shell: bash
+      run: |
+        rustsecbot \
+          --github-token "${{ inputs.token }}" \
+          --labels "${{ inputs.labels }}" \
+          --mode "${{ inputs.mode }}"
