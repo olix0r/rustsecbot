@@ -20,7 +20,7 @@ jobs:
       image: docker://docker.io/rust:1.60.0
     steps:
       - run: rustup component add clippy rustfmt
-      - uses: olix0r/cargo-action-fmt@ee1ef42932e44794821dab57ef1bf7a73df8b21f
+      - uses: olix0r/cargo-action-fmt@ed3530f0739c46ffa0dd983f8746b8c4a3d0a01c
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - run: cargo fetch --locked
       - run: cargo clippy --all-targets --frozen --message-format=json | cargo-action-fmt
@@ -48,7 +48,7 @@ jobs:
     container:
       image: docker://docker.io/rust:1.60.0
     steps:
-      - uses: olix0r/cargo-action-fmt@ee1ef42932e44794821dab57ef1bf7a73df8b21f
+      - uses: olix0r/cargo-action-fmt@ed3530f0739c46ffa0dd983f8746b8c4a3d0a01c
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
       - run: cargo fetch --locked
       - run: cargo test --no-run --frozen --message-format=json | cargo-action-fmt
